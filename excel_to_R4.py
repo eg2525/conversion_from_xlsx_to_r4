@@ -107,7 +107,7 @@ if uploaded_file:
         output_df['貸方補助'] = output_df['貸方補助'].fillna(0)
 
         # CSVファイルのバイナリストリームを作成
-        csv = output_df.to_csv(index=False, encoding='utf-8-sig')
+        csv = output_df.to_csv(index=False, encoding='cp932')
         st.download_button(label="CSVダウンロード", data=csv, file_name="output.csv", mime="text/csv")
 
         # 完了メッセージ

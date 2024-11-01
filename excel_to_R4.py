@@ -3,21 +3,23 @@ import pandas as pd
 from io import BytesIO
 
 # タイトル
-st.title("会計データ変換アプリ")
+st.title("Excel取込アプリ")
 
 # 1. Excelファイルのアップロード
 uploaded_file = st.file_uploader("Excelファイルをアップロードしてください", type=["xlsx"])
 
+# ファイルがアップロードされている場合
 if uploaded_file:
     # Excelファイルの全シートを読み込み
     dfs = pd.read_excel(uploaded_file, sheet_name=None)
     
-    # 2. シート選択ドロップダウン
+    # シート選択ドロップダウンを表示
     sheet_names = list(dfs.keys())
     selected_sheet = st.selectbox("シートを選択してください", sheet_names)
     
-    if selected_sheet:
-        # 選択したシートのデータ
+    # OKボタンを配置
+    if st.button("OK"):
+        # OKボタンが押された場合のみ処理を開始
         df_september = dfs[selected_sheet]
         
         # 空の出力用データフレームを作成

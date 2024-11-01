@@ -53,8 +53,8 @@ if uploaded_file:
         # ④ 入金・出金の処理
         df_september['借方金額'] = df_september[['入金', '出金']].sum(axis=1, skipna=True)
         df_september['貸方金額'] = df_september['借方金額']
-        output_df['借方金額'] = df_september['借方金額']
-        output_df['貸方金額'] = df_september['貸方金額']
+        output_df['借方金額'] = df_september['借方金額'].astype(int)
+        output_df['貸方金額'] = df_september['貸方金額'].astype(int)
 
         # ⑤ 摘要の転記
         output_df['摘要'] = df_september['摘要']
@@ -106,9 +106,13 @@ if uploaded_file:
         output_df['借方補助'] = output_df['借方補助'].fillna(0)
         output_df['貸方補助'] = output_df['貸方補助'].fillna(0)
 
-        # CSVファイルのバイナリストリームを作成
-        csv = output_df.to_csv(index=False, encoding='cp932')
-        st.download_button(label="CSVダウンロード", data=csv, file_name="output.csv", mime="text/csv")
+        # CSVファイルをバイナリデータとしてエンコード
+        csv_buffer = BytesIO()
+        output_df.to_csv(csv_buffer, encoding='cp932', index=False)
+        csv_buffer.seek(0)  # バッファの先頭に移動
+
+        # CSVファイルのダウンロードボタン
+        st.download_button(label="CSVダウンロード", data=csv_buffer, file_name="output.csv", mime="text/csv")
 
         # 完了メッセージ
         st.success("処理が完了しました。CSVファイルをダウンロードできます。")

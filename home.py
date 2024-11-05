@@ -40,7 +40,7 @@ if st.session_state['current_app'] == 'app0':
     template.app0()
 elif st.session_state['current_app'] == 'app1':
     excel_to_R4_kaneko.app1()
-elif st.session_state['current_app'] == 'app1':
+elif st.session_state['current_app'] == 'app2':
     excel_to_R4.app2()
-elif st.session_state['current_app'] == 'app1':
+elif st.session_state['current_app'] == 'app3':
     excel_to_R4_bumon.app3()

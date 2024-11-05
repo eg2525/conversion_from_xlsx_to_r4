@@ -49,7 +49,7 @@ def app2():
             df_september = df_september.dropna(subset=['年', '月', '日'], how='all')
 
             # ② 年・月・日をint型に変換
-            df_september[['年', '月', '日']] = df_september[['年', '月', '日']].astype(str)
+            df_september[['年', '月', '日']] = df_september[['年', '月', '日']].astype(int)
 
             # ③ 年・月・日をyyyymmdd形式に変換して伝票日付に転記
             df_september['伝票日付'] = (

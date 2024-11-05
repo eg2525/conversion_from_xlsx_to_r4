@@ -31,9 +31,9 @@ with st.sidebar:
     if st.button('金子宝泉堂', key='app1'):
         show_app1()    
     if st.button('部門なし', key='app2'):
-        show_app1()    
+        show_app2()    
     if st.button('部門あり', key='app3'):
-        show_app1()    
+        show_app3()    
 
 # 選択されたアプリを表示
 if st.session_state['current_app'] == 'app0':

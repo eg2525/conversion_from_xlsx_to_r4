@@ -103,9 +103,20 @@ def app3():
             df_september['借方インボイス情報'] = df_september['ｲﾝﾎﾞｲｽ'].apply(lambda x: 8 if x == '○' else None)
             output_df['借方インボイス情報'] = df_september['借方インボイス情報']
 
-            # ⑩ '本部経費'確認
-            df_september['借方部門'] = df_september['本部経費'].apply(lambda x: 99 if x == '○' else None)
-            output_df['借方部門'] = df_september['借方部門']
+            # 部門一覧と部門コードの辞書を作成
+            department_dict = pd.Series(df_master['部門コード'].values, index=df_master['部門一覧']).to_dict()
+
+            # 部門コードを取得する関数を定義
+            def get_department_code(row):
+                if pd.notna(row['部門']):
+                    return department_dict.get(row['部門'], default_value)
+                else:
+                    return None
+
+            # '借方部門' 列を生成し、df_septemberの'部門'列を参照して値を設定
+            df_september['借方部門'] = df_september.apply(get_department_code, axis=1)
+            output_df['借方部門'] = df_september['借方部門'].fillna(default_value)
+
 
             # ⑫ 借方補助と貸方補助のデフォルト値設定
             output_df['借方補助'] = output_df['借方補助'].fillna(0)

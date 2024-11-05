@@ -17,6 +17,15 @@ if uploaded_file:
     sheet_names = list(dfs.keys())
     selected_sheet = st.selectbox("シートを選択してください", sheet_names)
     
+    # 借方科目と貸方科目の共通デフォルト値を選択肢として表示
+    account_options = {
+        "現金(100)": 100,
+        "立替経費(214)": 214,
+        "立替経費(230)": 230
+    }
+    selected_default = st.selectbox("科目のデフォルトを選択してください", list(account_options.keys()))
+    default_value = account_options[selected_default]  # 選択した値を共通デフォルト値として設定
+    
     # OKボタンを配置
     if st.button("OK"):
         # OKボタンが押された場合のみ処理を開始
@@ -65,46 +74,24 @@ if uploaded_file:
 
         def get_credit_account(row):
             if pd.notna(row['入金科目']):
-                return sales_account_dict.get(row['入金科目'], 154)
+                return sales_account_dict.get(row['入金科目'], default_value)
             else:
                 return None
 
         df_september['貸方科目'] = df_september.apply(get_credit_account, axis=1)
-        output_df['貸方科目'] = df_september['貸方科目']
+        output_df['貸方科目'] = df_september['貸方科目'].fillna(default_value)
 
         # ⑦ '出金科目'と'費用科目一覧'の照合
         expense_account_dict = pd.Series(df_master['費用科目コード'].values, index=df_master['費用科目一覧']).to_dict()
 
         def get_debit_account(row):
             if pd.notna(row['出金科目']):
-                return expense_account_dict.get(row['出金科目'], 154)
+                return expense_account_dict.get(row['出金科目'], default_value)
             else:
                 return None
 
         df_september['借方科目'] = df_september.apply(get_debit_account, axis=1)
-        output_df['借方科目'] = df_september['借方科目']
-
-        # ⑧ '軽減税率'確認
-        df_september['借方消費税コード'] = df_september['軽減税率'].apply(lambda x: 32 if x == '○' else None)
-        df_september['借方消費税税率'] = df_september['軽減税率'].apply(lambda x: 81 if x == '○' else None)
-        output_df['借方消費税コード'] = df_september['借方消費税コード']
-        output_df['借方消費税税率'] = df_september['借方消費税税率']
-
-        # ⑨ 'ｲﾝﾎﾞｲｽ'確認
-        df_september['借方インボイス情報'] = df_september['ｲﾝﾎﾞｲｽ'].apply(lambda x: 8 if x == '○' else None)
-        output_df['借方インボイス情報'] = df_september['借方インボイス情報']
-
-        # ⑩ '本部経費'確認
-        df_september['借方部門'] = df_september['本部経費'].apply(lambda x: 99 if x == '○' else None)
-        output_df['借方部門'] = df_september['借方部門']
-
-        # ⑪ 借方科目と貸方科目のデフォルト値設定
-        output_df['借方科目'] = output_df['借方科目'].fillna(100)
-        output_df['貸方科目'] = output_df['貸方科目'].fillna(100)
-
-        # ⑫ 借方補助と貸方補助のデフォルト値設定
-        output_df['借方補助'] = output_df['借方補助'].fillna(0)
-        output_df['貸方補助'] = output_df['貸方補助'].fillna(0)
+        output_df['借方科目'] = df_september['借方科目'].fillna(default_value)
 
         # CSVファイルをバイナリデータとしてエンコード
         csv_buffer = BytesIO()

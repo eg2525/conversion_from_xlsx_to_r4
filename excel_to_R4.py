@@ -49,7 +49,7 @@ def app2():
             df_september = df_september.dropna(subset=['年', '月', '日'], how='all')
 
             # ② 年・月・日をint型に変換
-            df_september[['年', '月', '日']] = df_september[['年', '月', '日']].astype(int)
+            df_september[['年', '月', '日']] = df_september[['年', '月', '日']].astype(str)
 
             # ③ 年・月・日をyyyymmdd形式に変換して伝票日付に転記
             df_september['伝票日付'] = (
@@ -62,8 +62,8 @@ def app2():
             # ④ 入金・出金の処理
             df_september['借方金額'] = df_september[['入金', '出金']].sum(axis=1, skipna=True)
             df_september['貸方金額'] = df_september['借方金額']
-            output_df['借方金額'] = df_september['借方金額'].astype(int)
-            output_df['貸方金額'] = df_september['貸方金額'].astype(int)
+            output_df['借方金額'] = df_september['借方金額'].astype(str)
+            output_df['貸方金額'] = df_september['貸方金額'].astype(str)
 
             # ⑤ 摘要の転記
             output_df['摘要'] = df_september['摘要']
@@ -103,10 +103,6 @@ def app2():
             df_september['借方インボイス情報'] = df_september['ｲﾝﾎﾞｲｽ'].apply(lambda x: 8 if x == '○' else None)
             output_df['借方インボイス情報'] = df_september['借方インボイス情報']
 
-            # ⑩ '本部経費'確認
-            df_september['借方部門'] = df_september['本部経費'].apply(lambda x: 99 if x == '○' else None)
-            output_df['借方部門'] = df_september['借方部門']
-
             # ⑫ 借方補助と貸方補助のデフォルト値設定
             output_df['借方補助'] = output_df['借方補助'].fillna(0)
             output_df['貸方補助'] = output_df['貸方補助'].fillna(0)
@@ -117,7 +113,7 @@ def app2():
             csv_buffer.seek(0)  # バッファの先頭に移動
 
             # CSVファイルのダウンロードボタン
-            st.download_button(label="CSVダウンロード", data=csv_buffer, file_name="output.csv", mime="text/csv")
+            st.download_button(label="CSVダウンロード", data=csv_buffer, file_name="output_normal.csv", mime="text/csv")
 
             # 完了メッセージ
             st.success("処理が完了しました。CSVファイルをダウンロードできます。")

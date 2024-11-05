@@ -93,6 +93,24 @@ if uploaded_file:
         df_september['借方科目'] = df_september.apply(get_debit_account, axis=1)
         output_df['借方科目'] = df_september['借方科目'].fillna(default_value)
 
+        # ⑧ '軽減税率'確認
+        df_september['借方消費税コード'] = df_september['軽減税率'].apply(lambda x: 32 if x == '○' else None)
+        df_september['借方消費税税率'] = df_september['軽減税率'].apply(lambda x: 81 if x == '○' else None)
+        output_df['借方消費税コード'] = df_september['借方消費税コード']
+        output_df['借方消費税税率'] = df_september['借方消費税税率']
+
+        # ⑨ 'ｲﾝﾎﾞｲｽ'確認
+        df_september['借方インボイス情報'] = df_september['ｲﾝﾎﾞｲｽ'].apply(lambda x: 8 if x == '○' else None)
+        output_df['借方インボイス情報'] = df_september['借方インボイス情報']
+
+        # ⑩ '本部経費'確認
+        df_september['借方部門'] = df_september['本部経費'].apply(lambda x: 99 if x == '○' else None)
+        output_df['借方部門'] = df_september['借方部門']
+
+        # ⑫ 借方補助と貸方補助のデフォルト値設定
+        output_df['借方補助'] = output_df['借方補助'].fillna(0)
+        output_df['貸方補助'] = output_df['貸方補助'].fillna(0)
+
         # CSVファイルをバイナリデータとしてエンコード
         csv_buffer = BytesIO()
         output_df.to_csv(csv_buffer, encoding='cp932', index=False)

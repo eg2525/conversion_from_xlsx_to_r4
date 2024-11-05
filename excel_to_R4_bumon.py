@@ -117,8 +117,7 @@ def app3():
             df_september['借方部門'] = df_september.apply(get_department_code, axis=1)
 
             # 値をコピーし、output_dfの'借方部門'列をstr型に変換
-            output_df['借方部門'] = df_september['借方部門'].fillna(0)
-            output_df['借方部門'] = df_september['借方部門'].astype(int)
+            output_df['借方部門'] = df_september['借方部門'].fillna(0).astype(int)
 
 
             # ⑫ 借方補助と貸方補助のデフォルト値設定

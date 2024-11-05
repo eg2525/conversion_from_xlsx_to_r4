@@ -91,6 +91,7 @@ def app3():
                     return None
 
             df_september['借方科目'] = df_september.apply(get_debit_account, axis=1)
+            output_df['借方科目'] = df_september['借方科目'].fillna(default_value)
 
             # ⑧ '軽減税率'確認
             df_september['借方消費税コード'] = df_september['軽減税率'].apply(lambda x: 32 if x == '○' else None)
@@ -108,13 +109,15 @@ def app3():
             # 部門コードを取得する関数を定義
             def get_department_code(row):
                 if pd.notna(row['部門']):
-                    return department_dict.get(row['部門'], default_value)
+                    return department_dict.get(row['部門'])
                 else:
                     return None
 
             # '借方部門' 列を生成し、df_septemberの'部門'列を参照して値を設定
             df_september['借方部門'] = df_september.apply(get_department_code, axis=1)
-            output_df['借方部門'] = df_september['借方部門'].fillna(default_value)
+
+            # 値をコピーし、output_dfの'借方部門'列をstr型に変換
+            output_df['借方部門'] = df_september['借方部門'].astype(str)
 
 
             # ⑫ 借方補助と貸方補助のデフォルト値設定

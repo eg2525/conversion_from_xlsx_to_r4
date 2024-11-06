@@ -3,6 +3,7 @@ import template
 import excel_to_R4_kaneko
 import excel_to_R4
 import excel_to_R4_bumon
+import excel_to_R4_yuwa
 
 # 初期状態では何も表示しないようにセッション状態を設定
 if 'current_app' not in st.session_state:
@@ -24,6 +25,9 @@ def show_app2():
 def show_app3():
     st.session_state['current_app'] = 'app3'
 
+def show_app4():
+    st.session_state['current_app'] = 'app4'
+
 # サイドバーでアプリ選択用のボタンを表示
 with st.sidebar:
     if st.button('テンプレート保存', key='app0'):
@@ -34,6 +38,8 @@ with st.sidebar:
         show_app2()    
     if st.button('部門あり', key='app3'):
         show_app3()    
+    if st.button('医療法人社団結和', key='app4'):
+        show_app3()  
 
 # 選択されたアプリを表示
 if st.session_state['current_app'] == 'app0':
@@ -44,3 +50,5 @@ elif st.session_state['current_app'] == 'app2':
     excel_to_R4.app2()
 elif st.session_state['current_app'] == 'app3':
     excel_to_R4_bumon.app3()
+elif st.session_state['current_app'] == 'app4':
+    excel_to_R4_yuwa.app4()

@@ -89,7 +89,7 @@ def app4():
             output_df['借方消費税税率'] = df_september['借方消費税税率']
 
             # ⑨ 'ｲﾝﾎﾞｲｽ'確認
-            df_september['借方インボイス情報'] = df_september['ｲﾝﾎﾞｲｽ'].apply(lambda x: 8 if x == '登録なし' else None)
+            df_september['借方インボイス情報'] = df_september['インボイス'].apply(lambda x: 8 if x == '登録なし' else None)
             output_df['借方インボイス情報'] = df_september['借方インボイス情報']
 
             # ⑫ 借方補助と貸方補助のデフォルト値設定

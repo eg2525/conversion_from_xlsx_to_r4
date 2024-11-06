@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 from io import BytesIO
+
 def app4():
     # タイトル
     st.title("医療法人社団結和")
@@ -82,6 +83,10 @@ def app4():
             df_september['借方科目'] = df_september.apply(get_debit_account, axis=1)
             output_df['借方科目'] = df_september['借方科目']
 
+            # 貸方科目にデフォルト値を設定（指定されたdefault_valueを使用）
+            df_september['貸方科目'] = df_september.get('貸方科目', pd.Series(default_value, index=df_september.index)).fillna(default_value)
+            output_df['貸方科目'] = df_september['貸方科目']
+
             # ⑧ '軽減税率'確認
             df_september['借方消費税コード'] = df_september['軽減税率'].apply(lambda x: 32 if x == '○' else None)
             df_september['借方消費税税率'] = df_september['軽減税率'].apply(lambda x: 81 if x == '○' else None)
@@ -102,7 +107,7 @@ def app4():
             csv_buffer.seek(0)  # バッファの先頭に移動
 
             # CSVファイルのダウンロードボタン
-            st.download_button(label="CSVダウンロード", data=csv_buffer, file_name="output_normal.csv", mime="text/csv")
+            st.download_button(label="CSVダウンロード", data=csv_buffer, file_name="output_yuwa.csv", mime="text/csv")
 
             # 完了メッセージ
             st.success("処理が完了しました。CSVファイルをダウンロードできます。")

@@ -39,7 +39,7 @@ with st.sidebar:
     if st.button('部門あり', key='app3'):
         show_app3()    
     if st.button('医療法人社団結和', key='app4'):
-        show_app3()  
+        show_app4()  
 
 # 選択されたアプリを表示
 if st.session_state['current_app'] == 'app0':

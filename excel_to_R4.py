@@ -106,7 +106,7 @@ def app2():
                     if row['貸方科目'] == default_value:
                         row['借方消費税コード'] = 32
                         row['借方消費税税率'] = 81
-                    else:
+                    elif row['貸方科目'] != default_value:
                         row['貸方消費税コード'] = 2
                         row['貸方消費税税率'] = 81
                 return row

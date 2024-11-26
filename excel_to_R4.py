@@ -102,19 +102,14 @@ def app2():
 
             # 軽減税率を確認し、借方または貸方の消費税コード・税率を設定
             def set_tax_codes(row):
-                # 貸方科目がデフォルト値と一致する場合に借方消費税を設定
-                try:
-                    # 型を揃えて比較
-                    credit_account = int(row['貸方科目']) if pd.notna(row['貸方科目']) else None
-                    if credit_account == default_value:
+                if row['軽減税率'] == '○':
+                    # 貸方科目の値をデフォルト値と比較
+                    if pd.notna(row['貸方科目']) and row['貸方科目'] == default_value:
                         row['借方消費税コード'] = 32
                         row['借方消費税税率'] = 81
                     else:
                         row['貸方消費税コード'] = 2
                         row['貸方消費税税率'] = 81
-                except ValueError:
-                    # 型変換エラーを無視
-                    pass
                 return row
 
             # 行ごとに処理を適用

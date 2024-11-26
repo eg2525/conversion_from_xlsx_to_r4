@@ -105,6 +105,17 @@ def app2():
             output_df['借方消費税コード'] = df_september['借方消費税コード']
             output_df['借方消費税税率'] = df_september['借方消費税税率']
 
+            df_september['貸方消費税コード'] = df_september.apply(
+                lambda row: 2 if row['軽減税率'] == '○' and (pd.isna(row['出金']) or row['出金'] == '') else None,
+                axis=1
+            )
+            df_september['貸方消費税税率'] = df_september.apply(
+                lambda row: 81 if row['軽減税率'] == '○' and (pd.isna(row['出金']) or row['出金'] == '') else None,
+                axis=1
+            )
+            output_df['貸方消費税コード'] = df_september['貸方消費税コード']
+            output_df['貸方消費税税率'] = df_september['貸方消費税税率']
+
             # ⑨ 'ｲﾝﾎﾞｲｽ'確認
             df_september['借方インボイス情報'] = df_september['ｲﾝﾎﾞｲｽ'].apply(lambda x: 8 if x == '○' else None)
             output_df['借方インボイス情報'] = df_september['借方インボイス情報']

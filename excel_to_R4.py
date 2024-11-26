@@ -94,24 +94,28 @@ def app2():
             output_df['借方科目'] = df_september['借方科目'].fillna(default_value)
 
             # ⑧ '軽減税率'確認
-            # 貸方科目列の値に基づいて借方消費税コードと税率を設定
-            def process_row(row):
-                if row['貸方科目'] == default_value:  # 貸方科目がデフォルト値の場合
-                    row['借方消費税コード'] = 32 if row['軽減税率'] == '○' else None
-                    row['借方消費税税率'] = 81 if row['軽減税率'] == '○' else None
-                else:  # それ以外の場合
-                    row['貸方消費税コード'] = 2 if row['軽減税率'] == '○' else None
-                    row['貸方消費税税率'] = 81 if row['軽減税率'] == '○' else None
+            # 軽減税率を確認し、借方または貸方の消費税コード・税率を設定
+            def set_tax_codes(row):
+                if row['軽減税率'] == '○':
+                    if row['貸方科目'] == default_value:
+                        # 貸方科目がdefault_valueと一致する場合
+                        row['借方消費税コード'] = 32
+                        row['借方消費税税率'] = 81
+                    else:
+                        # 貸方科目がdefault_valueと一致しない場合
+                        row['貸方消費税コード'] = 2
+                        row['貸方消費税税率'] = 81
                 return row
 
-            # 各行ごとに処理を適用
-            df_september = df_september.apply(process_row, axis=1)
+            # 行ごとに処理を適用
+            df_september = df_september.apply(set_tax_codes, axis=1)
 
-            # 結果を出力用データフレームに転記
+            # 出力データフレームにコピー
             output_df['借方消費税コード'] = df_september['借方消費税コード']
             output_df['借方消費税税率'] = df_september['借方消費税税率']
             output_df['貸方消費税コード'] = df_september['貸方消費税コード']
             output_df['貸方消費税税率'] = df_september['貸方消費税税率']
+
 
             # ⑨ 'ｲﾝﾎﾞｲｽ'確認
             df_september['借方インボイス情報'] = df_september['ｲﾝﾎﾞｲｽ'].apply(lambda x: 8 if x == '○' else None)

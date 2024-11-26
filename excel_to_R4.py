@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 from io import BytesIO
-
 def app2():
     # タイトル
     st.title("部門なしExcel")
@@ -13,11 +12,11 @@ def app2():
     if uploaded_file:
         # Excelファイルの全シートを読み込み
         dfs = pd.read_excel(uploaded_file, sheet_name=None)
-
+        
         # シート選択ドロップダウンを表示
         sheet_names = list(dfs.keys())
         selected_sheet = st.selectbox("シートを選択してください", sheet_names)
-
+        
         # 借方科目と貸方科目の共通デフォルト値を選択肢として表示
         account_options = {
             "現金(100)": 100,
@@ -26,12 +25,12 @@ def app2():
         }
         selected_default = st.selectbox("科目のデフォルトを選択してください", list(account_options.keys()))
         default_value = account_options[selected_default]  # 選択した値を共通デフォルト値として設定
-
+        
         # OKボタンを配置
         if st.button("OK"):
             # OKボタンが押された場合のみ処理を開始
             df_september = dfs[selected_sheet]
-
+            
             # 空の出力用データフレームを作成
             output_columns = [
                 "月種別", "種類", "形式", "作成方法", "付箋", "伝票日付", "伝票番号", "伝票摘要", "枝番", 
@@ -42,6 +41,7 @@ def app2():
                 "貸方資金区分", "貸方任意項目１", "貸方任意項目２", "貸方インボイス情報", "摘要", "期日", "証番号", 
                 "入力マシン", "入力ユーザ", "入力アプリ", "入力会社", "入力日付"
             ]
+            
             output_df = pd.DataFrame(columns=output_columns)
 
             # 各処理を実行
@@ -60,8 +60,8 @@ def app2():
             output_df['伝票日付'] = df_september['伝票日付']
 
             # ④ 入金・出金の処理
-            df_september.loc[:, '借方金額'] = df_september[['入金', '出金']].sum(axis=1, skipna=True)
-            df_september.loc[:, '貸方金額'] = df_september['借方金額']
+            df_september['借方金額'] = df_september[['入金', '出金']].sum(axis=1, skipna=True)
+            df_september['貸方金額'] = df_september['借方金額']
             output_df['借方金額'] = df_september['借方金額'].astype(str)
             output_df['貸方金額'] = df_september['貸方金額'].astype(str)
 
@@ -94,31 +94,10 @@ def app2():
             output_df['借方科目'] = df_september['借方科目'].fillna(default_value)
 
             # ⑧ '軽減税率'確認
-            # 必要な列を初期化
-            df_september['借方消費税コード'] = None
-            df_september['借方消費税税率'] = None
-            df_september['貸方消費税コード'] = None
-            df_september['貸方消費税税率'] = None
-
-            # 軽減税率を確認し、借方または貸方の消費税コード・税率を設定
-            def set_tax_codes(row):
-                if row['軽減税率'] == '○':
-                    if row['貸方科目'] == 100 or row['貸方科目'] == 214 or row['貸方科目'] == 230:
-                        row['借方消費税コード'] = 32
-                        row['借方消費税税率'] = 81
-                    else:
-                        row['貸方消費税コード'] = 2
-                        row['貸方消費税税率'] = 81
-                return row
-
-            # 行ごとに処理を適用
-            df_september = df_september.apply(set_tax_codes, axis=1)
-
-            # 出力データフレームにコピー
+            df_september['借方消費税コード'] = df_september['軽減税率'].apply(lambda x: 32 if x == '○' else None)
+            df_september['借方消費税税率'] = df_september['軽減税率'].apply(lambda x: 81 if x == '○' else None)
             output_df['借方消費税コード'] = df_september['借方消費税コード']
             output_df['借方消費税税率'] = df_september['借方消費税税率']
-            output_df['貸方消費税コード'] = df_september['貸方消費税コード']
-            output_df['貸方消費税税率'] = df_september['貸方消費税税率']
 
             # ⑨ 'ｲﾝﾎﾞｲｽ'確認
             df_september['借方インボイス情報'] = df_september['ｲﾝﾎﾞｲｽ'].apply(lambda x: 8 if x == '○' else None)

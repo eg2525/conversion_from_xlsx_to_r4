@@ -49,10 +49,10 @@ def app2():
             df_september = df_september.dropna(subset=['年', '月', '日'], how='all')
 
             # ② 年・月・日をint型に変換
-            df_september.loc[:, ['年', '月', '日']] = df_september.loc[:, ['年', '月', '日']].astype(int)
+            df_september[['年', '月', '日']] = df_september[['年', '月', '日']].astype(int)
 
             # ③ 年・月・日をyyyymmdd形式に変換して伝票日付に転記
-            df_september.loc[:, '伝票日付'] = (
+            df_september['伝票日付'] = (
                 df_september['年'].astype(str) +
                 df_september['月'].apply(lambda x: f"{x:02}") +
                 df_september['日'].apply(lambda x: f"{x:02}")
@@ -103,7 +103,7 @@ def app2():
             # 軽減税率を確認し、借方または貸方の消費税コード・税率を設定
             def set_tax_codes(row):
                 if row['軽減税率'] == '○':
-                    if pd.notna(row['貸方科目']) and row['貸方科目'] in [100, 214, 230]:
+                    if row['貸方科目'] == 100 or row['貸方科目'] == 214 or row['貸方科目'] == 230:
                         row['借方消費税コード'] = 32
                         row['借方消費税税率'] = 81
                     else:

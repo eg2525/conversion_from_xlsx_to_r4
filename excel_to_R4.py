@@ -94,8 +94,31 @@ def app2():
             output_df['借方科目'] = df_september['借方科目'].fillna(default_value)
 
             # ⑧ '軽減税率'確認
-            df_september['借方消費税コード'] = df_september['軽減税率'].apply(lambda x: 32 if x == '○' else None)
-            df_september['借方消費税税率'] = df_september['軽減税率'].apply(lambda x: 81 if x == '○' else None)
+            # 1. 貸方消費税コードと貸方消費税税率の設定（借方科目が default_value の場合）
+            df_september['貸方消費税コード'] = df_september.apply(
+                lambda row: 2 if row['借方科目'] == default_value else None,
+                axis=1
+            )
+
+            df_september['貸方消費税税率'] = df_september.apply(
+                lambda row: 81 if row['借方科目'] == default_value else None,
+                axis=1
+            )
+
+            # 2. 借方消費税コードと借方消費税税率の設定（軽減税率が '○' の場合）
+            df_september['借方消費税コード'] = df_september.apply(
+                lambda row: 32 if row['軽減税率'] == '○' and row['借方科目'] != default_value else None,
+                axis=1
+            )
+
+            df_september['借方消費税税率'] = df_september.apply(
+                lambda row: 81 if row['軽減税率'] == '○' and row['借方科目'] != default_value else None,
+                axis=1
+            )
+
+            # 3. output_df へのコピー
+            output_df['貸方消費税コード'] = df_september['貸方消費税コード']
+            output_df['貸方消費税税率'] = df_september['貸方消費税税率']
             output_df['借方消費税コード'] = df_september['借方消費税コード']
             output_df['借方消費税税率'] = df_september['借方消費税税率']
 

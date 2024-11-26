@@ -95,12 +95,12 @@ def app2():
 
             # ⑧ '軽減税率'確認
             df_september['借方消費税コード'] = df_september.apply(
-                lambda row: 32 if row['軽減税率'] == '○' and row['貸方科目'] in [100, 214, 230] else None,
+                lambda row: 32 if row['軽減税率'] == '○' and row['入金'] == '' else None,
                 axis=1
             )
 
             df_september['借方消費税税率'] = df_september.apply(
-                lambda row: 81 if row['軽減税率'] == '○' and row['貸方科目'] in [100, 214, 230] else None,
+                lambda row: 81 if row['軽減税率'] == '○' and row['入金'] == '' else None,
                 axis=1
             )
             output_df['借方消費税コード'] = df_september['借方消費税コード']

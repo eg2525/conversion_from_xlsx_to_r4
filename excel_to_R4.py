@@ -93,10 +93,16 @@ def app2():
             df_september['借方科目'] = df_september.apply(get_debit_account, axis=1)
             output_df['借方科目'] = df_september['借方科目'].fillna(default_value)
 
-            print(df_september['貸方科目'].dtype)
             # ⑧ '軽減税率'確認
-            df_september['借方消費税コード'] = df_september['軽減税率'].apply(lambda x: 32 if x == '○' else None)
-            df_september['借方消費税税率'] = df_september['軽減税率'].apply(lambda x: 81 if x == '○' else None)
+            df_september['借方消費税コード'] = df_september.apply(
+                lambda row: 32 if row['軽減税率'] == '○' and row['貸方科目'] in [100, 214, 230] else None,
+                axis=1
+            )
+
+            df_september['借方消費税税率'] = df_september.apply(
+                lambda row: 81 if row['軽減税率'] == '○' and row['貸方科目'] in [100, 214, 230] else None,
+                axis=1
+            )
             output_df['借方消費税コード'] = df_september['借方消費税コード']
             output_df['借方消費税税率'] = df_september['借方消費税税率']
 

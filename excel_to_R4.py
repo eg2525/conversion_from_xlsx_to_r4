@@ -1,7 +1,3 @@
-import streamlit as st
-import pandas as pd
-from io import BytesIO
-
 def app2():
     # タイトル
     st.title("部門なしExcel")
@@ -14,27 +10,6 @@ def app2():
         # Excelファイルの全シートを読み込み
         dfs = pd.read_excel(uploaded_file, sheet_name=None)
         
-        # シートの存在確認
-        if '科目マスタ' not in dfs:
-            st.error("アップロードされたファイルに '科目マスタ' シートが含まれていません。")
-            return
-        
-        # 必須データの取得
-        df_master = dfs['科目マスタ']
-        if '売上科目コード' not in df_master.columns or '売上科目一覧' not in df_master.columns:
-            st.error("'科目マスタ' シートに必要な列 ('売上科目コード', '売上科目一覧') がありません。")
-            return
-
-        # 科目辞書の作成
-        sales_account_dict = pd.Series(
-            df_master['売上科目コード'].values, 
-            index=df_master['売上科目一覧']
-        ).to_dict()
-        expense_account_dict = pd.Series(
-            df_master['費用科目コード'].values, 
-            index=df_master['費用科目一覧']
-        ).to_dict()
-
         # シート選択ドロップダウンを表示
         sheet_names = list(dfs.keys())
         selected_sheet = st.selectbox("シートを選択してください", sheet_names)
@@ -48,10 +23,11 @@ def app2():
         selected_default = st.selectbox("科目のデフォルトを選択してください", list(account_options.keys()))
         default_value = account_options[selected_default]  # 選択した値を共通デフォルト値として設定
         
+        # OKボタンを配置
         if st.button("OK"):
             df_september = dfs[selected_sheet]
             
-            # 空の出力用エントリリストを作成
+            # 出力用エントリリストを初期化
             output_entries = []
             
             # 科目マスタの辞書を作成
@@ -76,6 +52,17 @@ def app2():
             
             # '年', '月', '日'を整数型に変換
             df_september[['年', '月', '日']] = df_september[['年', '月', '日']].astype(int)
+            
+            # 出力データの列名を定義
+            output_columns = [
+                "月種別", "種類", "形式", "作成方法", "付箋", "伝票日付", "伝票番号", "伝票摘要", "枝番", 
+                "借方部門", "借方部門名", "借方科目", "借方科目名", "借方補助", "借方補助科目名", "借方金額", 
+                "借方消費税コード", "借方消費税業種", "借方消費税税率", "借方資金区分", "借方任意項目１", 
+                "借方任意項目２", "借方インボイス情報", "貸方部門", "貸方部門名", "貸方科目", "貸方科目名", 
+                "貸方補助", "貸方補助科目名", "貸方金額", "貸方消費税コード", "貸方消費税業種", "貸方消費税税率", 
+                "貸方資金区分", "貸方任意項目１", "貸方任意項目２", "貸方インボイス情報", "摘要", "期日", "証番号", 
+                "入力マシン", "入力ユーザ", "入力アプリ", "入力会社", "入力日付"
+            ]
             
             # 各行をループ処理
             for index, row in df_september.iterrows():
@@ -102,6 +89,7 @@ def app2():
                     "借方インボイス情報": '',
                     "貸方インボイス情報": '',
                     # 他の必須フィールドも初期化
+                    # 必要に応じて、output_columnsで定義したすべての列を含める
                 }
                 
                 # '入金'の処理

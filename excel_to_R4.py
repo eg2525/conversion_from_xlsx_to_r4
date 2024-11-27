@@ -51,10 +51,10 @@ def app2():
         if st.button("OK"):
             df_september = dfs[selected_sheet]
             
-            # Empty list to store output entries
+            # 空の出力用エントリリストを作成
             output_entries = []
             
-            # Create sales and expense account dictionaries
+            # 科目マスタの辞書を作成
             df_master = dfs['科目マスタ']
             sales_account_dict = pd.Series(df_master['売上科目コード'].values, index=df_master['売上科目一覧']).to_dict()
             expense_account_dict = pd.Series(df_master['費用科目コード'].values, index=df_master['費用科目一覧']).to_dict()
@@ -63,23 +63,23 @@ def app2():
                 if pd.notna(row['入金科目']):
                     return sales_account_dict.get(row['入金科目'], default_value)
                 else:
-                    return default_value  # Or None?
+                    return default_value  # デフォルト値を返す
             
             def get_debit_account(row):
                 if pd.notna(row['出金科目']):
                     return expense_account_dict.get(row['出金科目'], default_value)
                 else:
-                    return default_value  # Or None?
+                    return default_value  # デフォルト値を返す
             
-            # Drop rows where '年', '月', '日' are all NaN
+            # '年', '月', '日'が全て欠けている行を削除
             df_september = df_september.dropna(subset=['年', '月', '日'], how='all')
             
-            # Convert '年', '月', '日' to integers
+            # '年', '月', '日'を整数型に変換
             df_september[['年', '月', '日']] = df_september[['年', '月', '日']].astype(int)
             
-            # Iterate over rows
+            # 各行をループ処理
             for index, row in df_september.iterrows():
-                # Process date
+                # 伝票日付の作成
                 date_str = (
                     str(int(row['年'])) +
                     f"{int(row['月']):02}" +
@@ -88,33 +88,32 @@ def app2():
                 denpyou_date = date_str
                 summary = row['摘要']
                 
-                # Base entry
+                # 基本となるエントリを作成
                 base_entry = {
                     "伝票日付": denpyou_date,
                     "摘要": summary,
-                    # Initialize other columns as needed
-                    # For example, '借方補助': 0, '貸方補助': 0
+                    # 必要な他の列を初期化
                     "借方補助": 0,
                     "貸方補助": 0,
-                    # Initialize '借方消費税コード', etc., as empty or default
                     "借方消費税コード": '',
                     "借方消費税税率": '',
                     "貸方消費税コード": '',
                     "貸方消費税税率": '',
                     "借方インボイス情報": '',
                     "貸方インボイス情報": '',
+                    # 他の必須フィールドも初期化
                 }
                 
-                # Process '入金'
+                # '入金'の処理
                 if pd.notna(row['入金']) and row['入金'] != 0:
                     entry = base_entry.copy()
                     amount = row['入金']
                     entry['借方金額'] = str(amount)
                     entry['貸方金額'] = str(amount)
-                    entry['借方科目'] = default_value  # Cash account code
+                    entry['借方科目'] = default_value  # 現金科目コード
                     entry['貸方科目'] = get_credit_account(row)
                     
-                    # Process '軽減税率' and 'ｲﾝﾎﾞｲｽ'
+                    # '軽減税率'と'ｲﾝﾎﾞｲｽ'の処理
                     if row.get('軽減税率') == '○':
                         entry['貸方消費税コード'] = 2
                         entry['貸方消費税税率'] = 81
@@ -123,16 +122,16 @@ def app2():
                     
                     output_entries.append(entry)
                 
-                # Process '出金'
+                # '出金'の処理
                 if pd.notna(row['出金']) and row['出金'] != 0:
                     entry = base_entry.copy()
                     amount = row['出金']
                     entry['借方金額'] = str(amount)
                     entry['貸方金額'] = str(amount)
                     entry['借方科目'] = get_debit_account(row)
-                    entry['貸方科目'] = default_value  # Cash account code
+                    entry['貸方科目'] = default_value  # 現金科目コード
                     
-                    # Process '軽減税率' and 'ｲﾝﾎﾞｲｽ'
+                    # '軽減税率'と'ｲﾝﾎﾞｲｽ'の処理
                     if row.get('軽減税率') == '○':
                         entry['借方消費税コード'] = 32
                         entry['借方消費税税率'] = 81
@@ -141,17 +140,17 @@ def app2():
                     
                     output_entries.append(entry)
             
-            # Create output DataFrame
+            # 出力用DataFrameの作成
             output_df = pd.DataFrame(output_entries, columns=output_columns)
             
-            # Fill in other columns with default values if necessary
+            # 必要に応じて他の列をデフォルト値で埋める
             output_df['借方補助'] = output_df['借方補助'].fillna(0)
             output_df['貸方補助'] = output_df['貸方補助'].fillna(0)
             
-            # CSV export as before
+            # CSVファイルをエクスポート
             csv_buffer = BytesIO()
             output_df.to_csv(csv_buffer, encoding='cp932', index=False)
-            csv_buffer.seek(0)  # Move to the start of the buffer
+            csv_buffer.seek(0)  # バッファの先頭に移動
             
             st.download_button(label="CSVダウンロード", data=csv_buffer, file_name="output_normal.csv", mime="text/csv")
             

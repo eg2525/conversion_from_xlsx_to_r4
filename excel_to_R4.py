@@ -13,11 +13,11 @@ def app2():
     if uploaded_file:
         # Excelファイルの全シートを読み込み
         dfs = pd.read_excel(uploaded_file, sheet_name=None)
-
+        
         # シート選択ドロップダウンを表示
         sheet_names = list(dfs.keys())
         selected_sheet = st.selectbox("シートを選択してください", sheet_names)
-
+        
         # 借方科目と貸方科目の共通デフォルト値を選択肢として表示
         account_options = {
             "現金(100)": 100,
@@ -26,12 +26,12 @@ def app2():
         }
         selected_default = st.selectbox("科目のデフォルトを選択してください", list(account_options.keys()))
         default_value = account_options[selected_default]  # 選択した値を共通デフォルト値として設定
-
+        
         # OKボタンを配置
         if st.button("OK"):
             # OKボタンが押された場合のみ処理を開始
             df_september = dfs[selected_sheet]
-
+            
             # 空の出力用データフレームを作成
             output_columns = [
                 "月種別", "種類", "形式", "作成方法", "付箋", "伝票日付", "伝票番号", "伝票摘要", "枝番", 
@@ -44,28 +44,7 @@ def app2():
             ]
             output_df = pd.DataFrame(columns=output_columns)
 
-            # 必要なシートが存在するか確認
-            if '科目マスタ' not in dfs:
-                st.error("エラー: 科目マスタシートが存在しません。Excelファイルを確認してください。")
-                return
-
-            df_master = dfs['科目マスタ']
-
-            # 必要な列が存在するか確認
-            required_columns = {'売上科目一覧', '売上科目コード', '費用科目一覧', '費用科目コード'}
-            if not required_columns.issubset(df_master.columns):
-                st.error(f"エラー: 科目マスタに必要な列が不足しています。以下を確認してください: {required_columns}")
-                return
-
-            # 辞書の作成
-            sales_account_dict = pd.Series(df_master['売上科目コード'].values, index=df_master['売上科目一覧']).to_dict()
-            expense_account_dict = pd.Series(df_master['費用科目コード'].values, index=df_master['費用科目一覧']).to_dict()
-
-            # 必要な列が存在するか確認
-            if not {'入金', '出金'}.issubset(df_september.columns):
-                st.error("エラー: 入金または出金列が存在しません。Excelファイルを確認してください。")
-                return
-
+            # 各処理を実行
             # ① 年・月・日が全て欠けている行を削除
             df_september = df_september.dropna(subset=['年', '月', '日'], how='all')
 
@@ -80,46 +59,96 @@ def app2():
             )
             output_df['伝票日付'] = df_september['伝票日付']
 
-            # ④ 入金・出金の処理
-            dual_entries = df_september.dropna(subset=['入金', '出金'], how='all')
+            # 入出金両方に値がある行を分割
+            rows_to_split = df_september[(df_september['入金'].notna()) & (df_september['出金'].notna())]
 
-            rows_to_add = []
-            for _, row in dual_entries.iterrows():
-                # 入金行を作成
-                debit_row = row.copy()
-                debit_row['出金'] = None
-                debit_row['借方金額'] = row['入金']
-                debit_row['貸方金額'] = row['入金']
-                debit_row['借方科目'] = default_value
-                debit_row['貸方科目'] = sales_account_dict.get(row['入金科目'], default_value)
-                rows_to_add.append(debit_row)
-
-                # 出金行を作成
+            # 分割する行の処理
+            split_rows = []
+            for _, row in rows_to_split.iterrows():
+                # 入金用の行
                 credit_row = row.copy()
-                credit_row['入金'] = None
-                credit_row['借方金額'] = row['出金']
-                credit_row['貸方金額'] = row['出金']
-                credit_row['借方科目'] = expense_account_dict.get(row['出金科目'], default_value)
-                credit_row['貸方科目'] = default_value
-                rows_to_add.append(credit_row)
+                credit_row['出金'] = None  # 出金をクリア
+                split_rows.append(credit_row)
 
-            # 分解した行を元のデータに追加
-            expanded_df = df_september[~df_september.index.isin(dual_entries.index)]
-            expanded_df = pd.concat([expanded_df, pd.DataFrame(rows_to_add)], ignore_index=True)
+                # 出金用の行
+                debit_row = row.copy()
+                debit_row['入金'] = None  # 入金をクリア
+                split_rows.append(debit_row)
 
-            # 借方金額と貸方金額をoutput_dfに転記
-            output_df['借方金額'] = expanded_df['借方金額'].astype(str)
-            output_df['貸方金額'] = expanded_df['貸方金額'].astype(str)
-            output_df['借方科目'] = expanded_df['借方科目']
-            output_df['貸方科目'] = expanded_df['貸方科目']
-            output_df['摘要'] = expanded_df['摘要']
+            # 元のデータフレームに分割行を追加し、重複行を削除
+            split_df = pd.DataFrame(split_rows)
+            df_september = pd.concat([df_september, split_df]).drop_duplicates(keep=False)
+
+            # ④ 入金・出金の処理
+            df_september['借方金額'] = df_september['出金'].fillna(0)
+            df_september['貸方金額'] = df_september['入金'].fillna(0)
+
+            # ⑤ 摘要の転記
+            output_df['摘要'] = df_september['摘要']
+
+            # ⑥ '入金科目'と'売上科目一覧'の照合
+            df_master = dfs['科目マスタ']
+            sales_account_dict = pd.Series(df_master['売上科目コード'].values, index=df_master['売上科目一覧']).to_dict()
+
+            def get_credit_account(row):
+                if pd.notna(row['入金科目']):
+                    return sales_account_dict.get(row['入金科目'], default_value)
+                else:
+                    return None
+
+            df_september['貸方科目'] = df_september.apply(get_credit_account, axis=1)
+            output_df['貸方科目'] = df_september['貸方科目'].fillna(default_value)
+
+            # ⑦ '出金科目'と'費用科目一覧'の照合
+            expense_account_dict = pd.Series(df_master['費用科目コード'].values, index=df_master['費用科目一覧']).to_dict()
+
+            def get_debit_account(row):
+                if pd.notna(row['出金科目']):
+                    return expense_account_dict.get(row['出金科目'], default_value)
+                else:
+                    return None
+
+            df_september['借方科目'] = df_september.apply(get_debit_account, axis=1)
+            output_df['借方科目'] = df_september['借方科目'].fillna(default_value)
+
+            # ⑧ '軽減税率'確認
+            df_september['借方消費税コード'] = df_september.apply(
+                lambda row: 32 if row['軽減税率'] == '○' and (pd.isna(row['入金']) or row['入金'] == '') else None,
+                axis=1
+            )
+            df_september['借方消費税税率'] = df_september.apply(
+                lambda row: 81 if row['軽減税率'] == '○' and (pd.isna(row['入金']) or row['入金'] == '') else None,
+                axis=1
+            )
+            output_df['借方消費税コード'] = df_september['借方消費税コード']
+            output_df['借方消費税税率'] = df_september['借方消費税税率']
+
+            df_september['貸方消費税コード'] = df_september.apply(
+                lambda row: 2 if row['軽減税率'] == '○' and (pd.isna(row['出金']) or row['出金'] == '') else None,
+                axis=1
+            )
+            df_september['貸方消費税税率'] = df_september.apply(
+                lambda row: 81 if row['軽減税率'] == '○' and (pd.isna(row['出金']) or row['出金'] == '') else None,
+                axis=1
+            )
+            output_df['貸方消費税コード'] = df_september['貸方消費税コード']
+            output_df['貸方消費税税率'] = df_september['貸方消費税税率']
+
+            # ⑨ 'ｲﾝﾎﾞｲｽ'確認
+            df_september['借方インボイス情報'] = df_september['ｲﾝﾎﾞｲｽ'].apply(lambda x: 8 if x == '○' else None)
+            output_df['借方インボイス情報'] = df_september['借方インボイス情報']
+
+            # ⑫ 借方補助と貸方補助のデフォルト値設定
+            output_df['借方補助'] = output_df['借方補助'].fillna(0)
+            output_df['貸方補助'] = output_df['貸方補助'].fillna(0)
 
             # CSVファイルをバイナリデータとしてエンコード
             csv_buffer = BytesIO()
             output_df.to_csv(csv_buffer, encoding='cp932', index=False)
-            csv_buffer.seek(0)
+            csv_buffer.seek(0)  # バッファの先頭に移動
 
             # CSVファイルのダウンロードボタン
             st.download_button(label="CSVダウンロード", data=csv_buffer, file_name="output_normal.csv", mime="text/csv")
 
+            # 完了メッセージ
             st.success("処理が完了しました。CSVファイルをダウンロードできます。")

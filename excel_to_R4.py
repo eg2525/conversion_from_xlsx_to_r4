@@ -71,6 +71,8 @@ def app2():
                 debit_row['出金'] = None  # 出金列を空欄に
                 debit_row['借方金額'] = row['入金']  # 借方金額は入金額
                 debit_row['貸方金額'] = row['入金']  # 貸方金額も同額
+                debit_row['借方科目'] = default_value  # 現金や預金などのデフォルト科目を設定
+                debit_row['貸方科目'] = sales_account_dict.get(row['入金科目'], default_value)  # 入金科目を基に科目設定
                 rows_to_add.append(debit_row)
 
                 # 出金行を作成
@@ -78,8 +80,10 @@ def app2():
                 credit_row['入金'] = None  # 入金列を空欄に
                 credit_row['借方金額'] = row['出金']  # 借方金額は出金額
                 credit_row['貸方金額'] = row['出金']  # 貸方金額も同額
+                credit_row['借方科目'] = expense_account_dict.get(row['出金科目'], default_value)  # 出金科目を基に科目設定
+                credit_row['貸方科目'] = default_value  # 現金や預金などのデフォルト科目を設定
                 rows_to_add.append(credit_row)
-
+                
             # 分解した行を元のデータに追加
             expanded_df = df_september[~df_september.index.isin(dual_entries.index)]  # 元データから該当行を削除
             expanded_df = pd.concat([expanded_df, pd.DataFrame(rows_to_add)], ignore_index=True)

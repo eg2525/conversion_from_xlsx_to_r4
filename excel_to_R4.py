@@ -60,10 +60,34 @@ def app2():
             output_df['伝票日付'] = df_september['伝票日付']
 
             # ④ 入金・出金の処理
-            df_september['借方金額'] = df_september[['入金', '出金']].sum(axis=1, skipna=True)
-            df_september['貸方金額'] = df_september['借方金額']
-            output_df['借方金額'] = df_september['借方金額'].astype(str)
-            output_df['貸方金額'] = df_september['貸方金額'].astype(str)
+            # 入金と出金が両方存在する行を検出
+            dual_entries = df_september.dropna(subset=['入金', '出金'], how='all')  # 両方非NaNの行
+
+            # 分解して2行に展開
+            rows_to_add = []
+            for _, row in dual_entries.iterrows():
+                # 入金行を作成
+                debit_row = row.copy()
+                debit_row['出金'] = None  # 出金列を空欄に
+                debit_row['借方金額'] = row['入金']  # 借方金額は入金額
+                debit_row['貸方金額'] = row['入金']  # 貸方金額も同額
+                rows_to_add.append(debit_row)
+
+                # 出金行を作成
+                credit_row = row.copy()
+                credit_row['入金'] = None  # 入金列を空欄に
+                credit_row['借方金額'] = row['出金']  # 借方金額は出金額
+                credit_row['貸方金額'] = row['出金']  # 貸方金額も同額
+                rows_to_add.append(credit_row)
+
+            # 分解した行を元のデータに追加
+            expanded_df = df_september[~df_september.index.isin(dual_entries.index)]  # 元データから該当行を削除
+            expanded_df = pd.concat([expanded_df, pd.DataFrame(rows_to_add)], ignore_index=True)
+
+            # 借方金額と貸方金額をoutput_dfに転記
+            output_df['借方金額'] = expanded_df['借方金額'].astype(str)
+            output_df['貸方金額'] = expanded_df['貸方金額'].astype(str)
+
 
             # ⑤ 摘要の転記
             output_df['摘要'] = df_september['摘要']

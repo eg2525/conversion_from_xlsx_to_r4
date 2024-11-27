@@ -1,3 +1,7 @@
+import streamlit as st
+import pandas as pd
+from io import BytesIO
+
 def app2():
     # タイトル
     st.title("部門なしExcel")

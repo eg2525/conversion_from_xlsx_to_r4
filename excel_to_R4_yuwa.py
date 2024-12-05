@@ -88,8 +88,8 @@ def app4():
             output_df['貸方科目'] = df_september['貸方科目']
 
             # ⑧ '軽減税率'確認
-            df_september['借方消費税コード'] = df_september['軽減税率'].apply(lambda x: 32 if x == '○' else None)
-            df_september['借方消費税税率'] = df_september['軽減税率'].apply(lambda x: 81 if x == '○' else None)
+            df_september['借方消費税コード'] = df_september['軽減税率'].apply(lambda x: 32 if x in ['○', '〇'] else None)
+            df_september['借方消費税税率'] = df_september['軽減税率'].apply(lambda x: 81 if x in ['○', '〇'] else None)
             output_df['借方消費税コード'] = df_september['借方消費税コード']
             output_df['借方消費税税率'] = df_september['借方消費税税率']
 

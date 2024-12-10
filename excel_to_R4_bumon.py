@@ -139,7 +139,7 @@ def app3():
                     "入力日付": ""
                 }
                 
-                # '入金'の処理: default_valueが借方科目に割り当たるので借方側に部門を設定
+                # '入金'の処理: default_valueが借方科目→借方部門にdepartment_code
                 if pd.notna(row['入金']) and row['入金'] != 0:
                     entry = base_entry.copy()
                     amount = row['入金']
@@ -148,7 +148,6 @@ def app3():
                     entry['借方科目'] = default_value  # 現金科目コード
                     entry['貸方科目'] = get_credit_account(row)
                     
-                    # 入金の場合は借方側がdefault_valueなので、借方部門にdepartment_codeを設定
                     entry['借方部門'] = department_code
                     
                     # 軽減税率とインボイス処理
@@ -160,7 +159,7 @@ def app3():
                         
                     output_entries.append(entry)
                 
-                # '出金'の処理: default_valueが貸方科目に割り当たるので貸方側に部門を設定
+                # '出金'の処理: default_valueが貸方科目→貸方部門にdepartment_code
                 if pd.notna(row['出金']) and row['出金'] != 0:
                     entry = base_entry.copy()
                     amount = row['出金']
@@ -169,7 +168,6 @@ def app3():
                     entry['借方科目'] = get_debit_account(row)
                     entry['貸方科目'] = default_value  # 現金科目コード
                     
-                    # 出金の場合は貸方側がdefault_valueなので、貸方部門にdepartment_codeを設定
                     entry['貸方部門'] = department_code
                     
                     # 軽減税率とインボイス処理
@@ -183,6 +181,10 @@ def app3():
             
             # 出力用DataFrameの作成
             output_df = pd.DataFrame(output_entries, columns=output_columns)
+            
+            # 部門列をfillna(0)で補完し、int型に変換
+            output_df['借方部門'] = output_df['借方部門'].fillna(0).astype(int)
+            output_df['貸方部門'] = output_df['貸方部門'].fillna(0).astype(int)
             
             # 借方補助と貸方補助のデフォルト値設定
             output_df['借方補助'] = output_df['借方補助'].fillna(0)

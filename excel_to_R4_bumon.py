@@ -40,28 +40,25 @@ def app3():
             # 科目マスタの辞書を作成
             df_master = dfs['科目マスタ']
             
-            # strip() で余分な空白などを除去して辞書を作成
+            # strip()でデータ整形
             sales_account_dict = {str(k).strip(): v for k, v in zip(df_master['売上科目一覧'], df_master['売上科目コード'])}
             expense_account_dict = {str(k).strip(): v for k, v in zip(df_master['費用科目一覧'], df_master['費用科目コード'])}
             department_dict = {str(k).strip(): v for k, v in zip(df_master['部門一覧'], df_master['部門コード'])}
             
             def get_credit_account(row):
                 if pd.notna(row['入金科目']):
-                    # 入金科目もstripしてから辞書検索
                     return sales_account_dict.get(str(row['入金科目']).strip(), default_value)
                 else:
                     return default_value
 
             def get_debit_account(row):
                 if pd.notna(row['出金科目']):
-                    # 出金科目もstripしてから辞書検索
                     return expense_account_dict.get(str(row['出金科目']).strip(), default_value)
                 else:
                     return default_value
             
             def get_department_code(row):
                 if pd.notna(row['部門']):
-                    # 部門名をstripしてから辞書検索
                     dept_name = str(row['部門']).strip()
                     return department_dict.get(dept_name, 0)
                 else:
@@ -93,7 +90,7 @@ def app3():
                 summary = row['摘要']
                 department_code = get_department_code(row)
                 
-                # 基本となるエントリを作成（部門コードをこの時点で設定）
+                # 基本となるエントリを作成（初期は空にしておき、入金・出金で振り分ける）
                 base_entry = {
                     "月種別": "",
                     "種類": "",
@@ -104,7 +101,7 @@ def app3():
                     "伝票番号": "",
                     "伝票摘要": "",
                     "枝番": "",
-                    "借方部門": department_code,
+                    "借方部門": "",
                     "借方部門名": "",
                     "借方科目": "",
                     "借方科目名": "",
@@ -142,7 +139,7 @@ def app3():
                     "入力日付": ""
                 }
                 
-                # '入金'の処理
+                # '入金'の処理: default_valueが借方科目に割り当たるので借方側に部門を設定
                 if pd.notna(row['入金']) and row['入金'] != 0:
                     entry = base_entry.copy()
                     amount = row['入金']
@@ -150,6 +147,9 @@ def app3():
                     entry['貸方金額'] = str(amount)
                     entry['借方科目'] = default_value  # 現金科目コード
                     entry['貸方科目'] = get_credit_account(row)
+                    
+                    # 入金の場合は借方側がdefault_valueなので、借方部門にdepartment_codeを設定
+                    entry['借方部門'] = department_code
                     
                     # 軽減税率とインボイス処理
                     if row.get('軽減税率') == '○':
@@ -160,7 +160,7 @@ def app3():
                         
                     output_entries.append(entry)
                 
-                # '出金'の処理
+                # '出金'の処理: default_valueが貸方科目に割り当たるので貸方側に部門を設定
                 if pd.notna(row['出金']) and row['出金'] != 0:
                     entry = base_entry.copy()
                     amount = row['出金']
@@ -168,6 +168,9 @@ def app3():
                     entry['貸方金額'] = str(amount)
                     entry['借方科目'] = get_debit_account(row)
                     entry['貸方科目'] = default_value  # 現金科目コード
+                    
+                    # 出金の場合は貸方側がdefault_valueなので、貸方部門にdepartment_codeを設定
+                    entry['貸方部門'] = department_code
                     
                     # 軽減税率とインボイス処理
                     if row.get('軽減税率') == '○':
@@ -195,4 +198,3 @@ def app3():
 
             # 完了メッセージ
             st.success("処理が完了しました。CSVファイルをダウンロードできます。")
-

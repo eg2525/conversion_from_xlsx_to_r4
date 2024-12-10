@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 from io import BytesIO
+
 def app3():
     # タイトル
     st.title("部門ありExcel")
@@ -30,25 +31,29 @@ def app3():
         if st.button("OK"):
             df_september = dfs[selected_sheet]
             
-            # 出力用エントリリストを初期化
-            output_entries = []
-            
             # 科目マスタの辞書を作成
             df_master = dfs['科目マスタ']
             sales_account_dict = pd.Series(df_master['売上科目コード'].values, index=df_master['売上科目一覧']).to_dict()
             expense_account_dict = pd.Series(df_master['費用科目コード'].values, index=df_master['費用科目一覧']).to_dict()
-            
+            department_dict = pd.Series(df_master['部門コード'].values, index=df_master['部門一覧']).to_dict()
+
             def get_credit_account(row):
                 if pd.notna(row['入金科目']):
                     return sales_account_dict.get(row['入金科目'], default_value)
                 else:
-                    return default_value  # デフォルト値を返す
-            
+                    return default_value
+
             def get_debit_account(row):
                 if pd.notna(row['出金科目']):
                     return expense_account_dict.get(row['出金科目'], default_value)
                 else:
-                    return default_value  # デフォルト値を返す
+                    return default_value
+            
+            def get_department_code(row):
+                if pd.notna(row['部門']):
+                    return department_dict.get(row['部門'], 0)
+                else:
+                    return 0
             
             # '年', '月', '日'が全て欠けている行を削除
             df_september = df_september.dropna(subset=['年', '月', '日'], how='all')
@@ -67,6 +72,9 @@ def app3():
                 "入力マシン", "入力ユーザ", "入力アプリ", "入力会社", "入力日付"
             ]
             
+            # 出力用エントリリストを初期化
+            output_entries = []
+            
             # 各行をループ処理
             for index, row in df_september.iterrows():
                 # 伝票日付の作成
@@ -78,21 +86,55 @@ def app3():
                 denpyou_date = date_str
                 summary = row['摘要']
                 
+                department_code = get_department_code(row)
+                
                 # 基本となるエントリを作成
                 base_entry = {
+                    "月種別": "",
+                    "種類": "",
+                    "形式": "",
+                    "作成方法": "",
+                    "付箋": "",
                     "伝票日付": denpyou_date,
-                    "摘要": summary,
-                    # 必要な他の列を初期化
+                    "伝票番号": "",
+                    "伝票摘要": "",
+                    "枝番": "",
+                    "借方部門": department_code,
+                    "借方部門名": "",
+                    "借方科目": "",
+                    "借方科目名": "",
                     "借方補助": 0,
+                    "借方補助科目名": "",
+                    "借方金額": "",
+                    "借方消費税コード": "",
+                    "借方消費税業種": "",
+                    "借方消費税税率": "",
+                    "借方資金区分": "",
+                    "借方任意項目１": "",
+                    "借方任意項目２": "",
+                    "借方インボイス情報": "",
+                    "貸方部門": "",
+                    "貸方部門名": "",
+                    "貸方科目": "",
+                    "貸方科目名": "",
                     "貸方補助": 0,
-                    "借方消費税コード": '',
-                    "借方消費税税率": '',
-                    "貸方消費税コード": '',
-                    "貸方消費税税率": '',
-                    "借方インボイス情報": '',
-                    "貸方インボイス情報": '',
-                    # 他の必須フィールドも初期化
-                    # 必要に応じて、output_columnsで定義したすべての列を含める
+                    "貸方補助科目名": "",
+                    "貸方金額": "",
+                    "貸方消費税コード": "",
+                    "貸方消費税業種": "",
+                    "貸方消費税税率": "",
+                    "貸方資金区分": "",
+                    "貸方任意項目１": "",
+                    "貸方任意項目２": "",
+                    "貸方インボイス情報": "",
+                    "摘要": summary,
+                    "期日": "",
+                    "証番号": "",
+                    "入力マシン": "",
+                    "入力ユーザ": "",
+                    "入力アプリ": "",
+                    "入力会社": "",
+                    "入力日付": ""
                 }
                 
                 # '入金'の処理
@@ -104,13 +146,13 @@ def app3():
                     entry['借方科目'] = default_value  # 現金科目コード
                     entry['貸方科目'] = get_credit_account(row)
                     
-                    # '軽減税率'と'ｲﾝﾎﾞｲｽ'の処理
+                    # 軽減税率とインボイス処理
                     if row.get('軽減税率') == '○':
                         entry['貸方消費税コード'] = 2
                         entry['貸方消費税税率'] = 'K8'
                     if row.get('ｲﾝﾎﾞｲｽ') == '○':
                         entry['貸方インボイス情報'] = 8
-                    
+                        
                     output_entries.append(entry)
                 
                 # '出金'の処理
@@ -122,39 +164,22 @@ def app3():
                     entry['借方科目'] = get_debit_account(row)
                     entry['貸方科目'] = default_value  # 現金科目コード
                     
-                    # '軽減税率'と'ｲﾝﾎﾞｲｽ'の処理
+                    # 軽減税率とインボイス処理
                     if row.get('軽減税率') == '○':
                         entry['借方消費税コード'] = 32
                         entry['借方消費税税率'] = 'K8'
                     if row.get('ｲﾝﾎﾞｲｽ') == '○':
                         entry['借方インボイス情報'] = 8
-                    
+                        
                     output_entries.append(entry)
             
             # 出力用DataFrameの作成
             output_df = pd.DataFrame(output_entries, columns=output_columns)
             
-            # 部門一覧と部門コードの辞書を作成
-            department_dict = pd.Series(df_master['部門コード'].values, index=df_master['部門一覧']).to_dict()
-
-            # 部門コードを取得する関数を定義
-            def get_department_code(row):
-                if pd.notna(row['部門']):
-                    return department_dict.get(row['部門'])
-                else:
-                    return None
-
-            # '借方部門' 列を生成し、df_septemberの'部門'列を参照して値を設定
-            df_september['借方部門'] = df_september.apply(get_department_code, axis=1)
-
-            # 値をコピーし、output_dfの'借方部門'列をstr型に変換
-            output_df['借方部門'] = df_september['借方部門'].fillna(0).astype(int)
-
-
-            # ⑫ 借方補助と貸方補助のデフォルト値設定
+            # 借方補助と貸方補助のデフォルト値設定
             output_df['借方補助'] = output_df['借方補助'].fillna(0)
             output_df['貸方補助'] = output_df['貸方補助'].fillna(0)
-
+            
             # CSVファイルをバイナリデータとしてエンコード
             csv_buffer = BytesIO()
             output_df.to_csv(csv_buffer, encoding='cp932', index=False)

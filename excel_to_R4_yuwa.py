@@ -4,7 +4,7 @@ from io import BytesIO
 
 def app4():
     # タイトル
-    st.title("医療法人社団結和")
+    st.title("経費取込")
 
     # 1. Excelファイルのアップロード
     uploaded_file = st.file_uploader("Excelファイルをアップロードしてください", type=["xlsx"])

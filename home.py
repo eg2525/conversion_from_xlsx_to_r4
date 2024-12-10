@@ -38,7 +38,7 @@ with st.sidebar:
         show_app2()    
     if st.button('部門あり', key='app3'):
         show_app3()    
-    if st.button('医療法人社団結和', key='app4'):
+    if st.button('経費取込', key='app4'):
         show_app4()  
 
 # 選択されたアプリを表示

@@ -26,6 +26,10 @@ def app3():
         selected_default = st.selectbox("科目のデフォルトを選択してください", list(account_options.keys()))
         default_value = account_options[selected_default]  # 選択した値を共通デフォルト値として設定
         
+        # OKボタンを配置
+        if st.button("OK"):
+            df_september = dfs[selected_sheet]
+            
             # 出力用エントリリストを初期化
             output_entries = []
             
@@ -130,10 +134,6 @@ def app3():
             # 出力用DataFrameの作成
             output_df = pd.DataFrame(output_entries, columns=output_columns)
             
-            # 必要に応じて他の列をデフォルト値で埋める
-            output_df['借方補助'] = output_df['借方補助'].fillna(0)
-            output_df['貸方補助'] = output_df['貸方補助'].fillna(0)
-
             # 部門一覧と部門コードの辞書を作成
             department_dict = pd.Series(df_master['部門コード'].values, index=df_master['部門一覧']).to_dict()
 

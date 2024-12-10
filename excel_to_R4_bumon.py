@@ -31,36 +31,42 @@ def app3():
         if st.button("OK"):
             df_september = dfs[selected_sheet]
             
-            # 科目マスタの辞書を作成
-            df_master = dfs['科目マスタ']
-            sales_account_dict = pd.Series(df_master['売上科目コード'].values, index=df_master['売上科目一覧']).to_dict()
-            expense_account_dict = pd.Series(df_master['費用科目コード'].values, index=df_master['費用科目一覧']).to_dict()
-            department_dict = pd.Series(df_master['部門コード'].values, index=df_master['部門一覧']).to_dict()
-
-            def get_credit_account(row):
-                if pd.notna(row['入金科目']):
-                    return sales_account_dict.get(row['入金科目'], default_value)
-                else:
-                    return default_value
-
-            def get_debit_account(row):
-                if pd.notna(row['出金科目']):
-                    return expense_account_dict.get(row['出金科目'], default_value)
-                else:
-                    return default_value
-            
-            def get_department_code(row):
-                if pd.notna(row['部門']):
-                    return department_dict.get(row['部門'], 0)
-                else:
-                    return 0
-            
             # '年', '月', '日'が全て欠けている行を削除
             df_september = df_september.dropna(subset=['年', '月', '日'], how='all')
             
             # '年', '月', '日'を整数型に変換
             df_september[['年', '月', '日']] = df_september[['年', '月', '日']].astype(int)
             
+            # 科目マスタの辞書を作成
+            df_master = dfs['科目マスタ']
+            
+            # strip() で余分な空白などを除去して辞書を作成
+            sales_account_dict = {str(k).strip(): v for k, v in zip(df_master['売上科目一覧'], df_master['売上科目コード'])}
+            expense_account_dict = {str(k).strip(): v for k, v in zip(df_master['費用科目一覧'], df_master['費用科目コード'])}
+            department_dict = {str(k).strip(): v for k, v in zip(df_master['部門一覧'], df_master['部門コード'])}
+            
+            def get_credit_account(row):
+                if pd.notna(row['入金科目']):
+                    # 入金科目もstripしてから辞書検索
+                    return sales_account_dict.get(str(row['入金科目']).strip(), default_value)
+                else:
+                    return default_value
+
+            def get_debit_account(row):
+                if pd.notna(row['出金科目']):
+                    # 出金科目もstripしてから辞書検索
+                    return expense_account_dict.get(str(row['出金科目']).strip(), default_value)
+                else:
+                    return default_value
+            
+            def get_department_code(row):
+                if pd.notna(row['部門']):
+                    # 部門名をstripしてから辞書検索
+                    dept_name = str(row['部門']).strip()
+                    return department_dict.get(dept_name, 0)
+                else:
+                    return 0
+
             # 出力データの列名を定義
             output_columns = [
                 "月種別", "種類", "形式", "作成方法", "付箋", "伝票日付", "伝票番号", "伝票摘要", "枝番", 
@@ -85,10 +91,9 @@ def app3():
                 )
                 denpyou_date = date_str
                 summary = row['摘要']
-                
                 department_code = get_department_code(row)
                 
-                # 基本となるエントリを作成
+                # 基本となるエントリを作成（部門コードをこの時点で設定）
                 base_entry = {
                     "月種別": "",
                     "種類": "",
@@ -190,3 +195,4 @@ def app3():
 
             # 完了メッセージ
             st.success("処理が完了しました。CSVファイルをダウンロードできます。")
+

@@ -90,7 +90,7 @@ def app3():
                 summary = row['摘要']
                 department_code = get_department_code(row)
                 
-                # 基本となるエントリを作成（初期は空にしておき、入金・出金で振り分ける）
+                # 基本となるエントリを作成
                 base_entry = {
                     "月種別": "",
                     "種類": "",
@@ -139,18 +139,16 @@ def app3():
                     "入力日付": ""
                 }
                 
-                # '入金'の処理: default_valueが借方科目→借方部門にdepartment_code
+                # 入金処理
                 if pd.notna(row['入金']) and row['入金'] != 0:
                     entry = base_entry.copy()
                     amount = row['入金']
                     entry['借方金額'] = str(amount)
                     entry['貸方金額'] = str(amount)
-                    entry['借方科目'] = default_value  # 現金科目コード
+                    entry['借方科目'] = default_value
                     entry['貸方科目'] = get_credit_account(row)
-                    
                     entry['借方部門'] = department_code
                     
-                    # 軽減税率とインボイス処理
                     if row.get('軽減税率') == '○':
                         entry['貸方消費税コード'] = 2
                         entry['貸方消費税税率'] = 'K8'
@@ -159,18 +157,16 @@ def app3():
                         
                     output_entries.append(entry)
                 
-                # '出金'の処理: default_valueが貸方科目→貸方部門にdepartment_code
+                # 出金処理
                 if pd.notna(row['出金']) and row['出金'] != 0:
                     entry = base_entry.copy()
                     amount = row['出金']
                     entry['借方金額'] = str(amount)
                     entry['貸方金額'] = str(amount)
                     entry['借方科目'] = get_debit_account(row)
-                    entry['貸方科目'] = default_value  # 現金科目コード
-                    
+                    entry['貸方科目'] = default_value
                     entry['貸方部門'] = department_code
                     
-                    # 軽減税率とインボイス処理
                     if row.get('軽減税率') == '○':
                         entry['借方消費税コード'] = 32
                         entry['借方消費税税率'] = 'K8'
@@ -181,10 +177,10 @@ def app3():
             
             # 出力用DataFrameの作成
             output_df = pd.DataFrame(output_entries, columns=output_columns)
-            
-            # 部門列をfillna(0)で補完し、int型に変換
-            output_df['借方部門'] = output_df['借方部門'].fillna(0).astype(int)
-            output_df['貸方部門'] = output_df['貸方部門'].fillna(0).astype(int)
+
+            # 部門列で空文字を0に変換し、NaNも0に変換してからint型へ
+            output_df['借方部門'] = output_df['借方部門'].replace('', 0).fillna(0).astype(int)
+            output_df['貸方部門'] = output_df['貸方部門'].replace('', 0).fillna(0).astype(int)
             
             # 借方補助と貸方補助のデフォルト値設定
             output_df['借方補助'] = output_df['借方補助'].fillna(0)
@@ -193,10 +189,9 @@ def app3():
             # CSVファイルをバイナリデータとしてエンコード
             csv_buffer = BytesIO()
             output_df.to_csv(csv_buffer, encoding='cp932', index=False)
-            csv_buffer.seek(0)  # バッファの先頭に移動
+            csv_buffer.seek(0)
 
             # CSVファイルのダウンロードボタン
             st.download_button(label="CSVダウンロード", data=csv_buffer, file_name="output.csv", mime="text/csv")
 
-            # 完了メッセージ
             st.success("処理が完了しました。CSVファイルをダウンロードできます。")

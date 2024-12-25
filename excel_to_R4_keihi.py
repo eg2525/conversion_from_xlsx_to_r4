@@ -2,9 +2,9 @@ import streamlit as st
 import pandas as pd
 from io import BytesIO
 
-def app5():
+def app4():
     # タイトル
-    st.title("結和取込")
+    st.title("経費取込")
 
     # 1. Excelファイルのアップロード
     uploaded_file = st.file_uploader("Excelファイルをアップロードしてください", type=["xlsx"])
@@ -21,7 +21,8 @@ def app5():
         # 借方科目と貸方科目の共通デフォルト値を選択肢として表示
         account_options = {
             "現金(100)": 100,
-            "立替経費(1193)": 1193
+            "立替経費(214)": 214,
+            "立替経費(230)": 230
         }
         selected_default = st.selectbox("科目のデフォルトを選択してください", list(account_options.keys()))
         default_value = account_options[selected_default]  # 選択した値を共通デフォルト値として設定
@@ -87,7 +88,7 @@ def app5():
             output_df['貸方科目'] = df_september['貸方科目']
 
             # ⑧ '軽減税率'確認
-            df_september['借方消費税コード'] = df_september['軽減税率'].apply(lambda x: 42 if x in ['○', '〇'] else None)
+            df_september['借方消費税コード'] = df_september['軽減税率'].apply(lambda x: 32 if x in ['○', '〇'] else None)
             df_september['借方消費税税率'] = df_september['軽減税率'].apply(lambda x: 'K8' if x in ['○', '〇'] else None)
             output_df['借方消費税コード'] = df_september['借方消費税コード']
             output_df['借方消費税税率'] = df_september['借方消費税税率']
@@ -97,13 +98,8 @@ def app5():
             output_df['借方インボイス情報'] = df_september['借方インボイス情報']
 
             # ⑫ 借方補助と貸方補助のデフォルト値設定
-            # 借方科目が527で借方補助がNaNの場合は2を埋める
-            output_df.loc[(output_df['借方科目'] == 527) & (output_df['借方補助'].isna()), '借方補助'] = 2
-
-            # それ以外のNaNは0を埋める
             output_df['借方補助'] = output_df['借方補助'].fillna(0)
             output_df['貸方補助'] = output_df['貸方補助'].fillna(0)
-            output_df['借方部門'] = output_df['借方部門'].fillna(1)
 
             # CSVファイルをバイナリデータとしてエンコード
             csv_buffer = BytesIO()

@@ -107,7 +107,7 @@ def app4():
             csv_buffer.seek(0)  # バッファの先頭に移動
 
             # CSVファイルのダウンロードボタン
-            st.download_button(label="CSVダウンロード", data=csv_buffer, file_name="output_yuwa.csv", mime="text/csv")
+            st.download_button(label="CSVダウンロード", data=csv_buffer, file_name="output_keihi.csv", mime="text/csv")
 
             # 完了メッセージ
             st.success("処理が完了しました。CSVファイルをダウンロードできます。")

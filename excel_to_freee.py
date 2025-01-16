@@ -81,10 +81,11 @@ def app6():
             # 貸方科目にデフォルト値を設定（指定されたdefault_valueを使用）
             df_september['貸方科目'] = df_september.get('貸方科目', pd.Series(default_value, index=df_september.index)).fillna(default_value)
             output_df['貸方勘定科目'] = df_september['貸方科目']
-
+                        
             # 借方税区分を条件に基づいて設定
             output_df['借方税区分'] = df_september.apply(
                 lambda row: (
+                    '不課税' if row['非課税/不課税'] in ['○', '〇'] else
                     '課対仕入（控80）8%（軽）' if row['軽減税率'] in ['○', '〇'] and row['インボイス'] == '登録なし' else
                     '課対仕入8%（軽）' if row['軽減税率'] in ['○', '〇'] and (pd.isna(row['インボイス']) or row['インボイス'] == '') else
                     '課対仕入（控80）10%' if (pd.isna(row['軽減税率']) or row['軽減税率'] == '') and row['インボイス'] == '登録なし' else

@@ -19,7 +19,7 @@ def app6():
         selected_sheet = st.selectbox("シートを選択してください", sheet_names)
         
         # 借方科目と貸方科目の共通デフォルト値を選択肢として表示
-        account_options = ["現金", "立替経費", "短期借入金"]
+        account_options = ["現金", "立替経費", "立替経費（永野）","立替経費（長谷川）", "短期借入金"]
 
         # ユーザーが選択したオプションをdefault_valueとして直接設定
         selected_default = st.selectbox("科目のデフォルトを選択してください", account_options)

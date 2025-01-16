@@ -67,4 +67,4 @@ elif st.session_state['current_app'] == 'app4':
 elif st.session_state['current_app'] == 'app5':
     excel_to_R4_yuwa.app5()
 elif st.session_state['current_app'] == 'app6':
-    excel_to_freee.app5()
+    excel_to_freee.app6()

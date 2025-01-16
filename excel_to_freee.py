@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 from io import BytesIO
 
-def app5():
+def app6():
     # タイトル
     st.title("トコロ")
 

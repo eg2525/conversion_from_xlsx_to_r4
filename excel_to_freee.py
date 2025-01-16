@@ -93,8 +93,9 @@ def app6():
                 axis=1
             )
 
-            output_df['借方金額'] = output_df['借方金額'].astype(int)
-            output_df['貸方金額'] = output_df['貸方金額'].astype(int)
+            # 文字列型が含まれていても対応できるようにfloat型に変換後、整数型に変換
+            output_df['借方金額'] = pd.to_numeric(output_df['借方金額'], errors='coerce').fillna(0).astype(int)
+            output_df['貸方金額'] = pd.to_numeric(output_df['貸方金額'], errors='coerce').fillna(0).astype(int)
 
             # CSVファイルをバイナリデータとしてエンコード
             csv_buffer = BytesIO()

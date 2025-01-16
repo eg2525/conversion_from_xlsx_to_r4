@@ -85,7 +85,7 @@ def app6():
             output_df['貸方科目'] = df_september['貸方科目']
 
             # 借方税区分を条件に基づいて設定
-            output_df['借方税区分'] = output_df.apply(
+            output_df['借方税区分'] = df_september.apply(
                 lambda row: (
                     '課対仕入（控80）8％（軽）' if row['軽減税率'] in ['○', '〇'] and row['インボイス'] == '登録なし' else
                     '課対仕入8％（軽）' if row['軽減税率'] in ['○', '〇'] and (pd.isna(row['インボイス']) or row['インボイス'] == '') else

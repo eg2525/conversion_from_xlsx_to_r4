@@ -51,8 +51,8 @@ def app6():
 
             # ③ 年・月・日をyyyymmdd形式に変換して伝票日付に転記
             df_september['日付'] = (
-                df_september['年'].astype(str) + '/'
-                df_september['月'].apply(lambda x: f"{x:02}") + '/'
+                df_september['年'].astype(str) + '/' +
+                df_september['月'].apply(lambda x: f"{x:02}") + '/' +
                 df_september['日'].apply(lambda x: f"{x:02}")
             )
             output_df['日付'] = df_september['日付']

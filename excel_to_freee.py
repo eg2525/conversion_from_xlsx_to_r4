@@ -19,13 +19,11 @@ def app6():
         selected_sheet = st.selectbox("シートを選択してください", sheet_names)
         
         # 借方科目と貸方科目の共通デフォルト値を選択肢として表示
-        account_options = {
-            "現金": 100,
-            "立替経費": 1193,
-            "短期借入金": 202
-        }
-        selected_default = st.selectbox("科目のデフォルトを選択してください", list(account_options.keys()))
-        default_value = account_options[selected_default]  # 選択した値を共通デフォルト値として設定
+        account_options = ["現金", "立替経費", "短期借入金"]
+
+        # ユーザーが選択したオプションをdefault_valueとして直接設定
+        selected_default = st.selectbox("科目のデフォルトを選択してください", account_options)
+        default_value = selected_default  # 選択された値をそのまま使用
         
         # OKボタンを配置
         if st.button("OK"):
@@ -78,11 +76,11 @@ def app6():
 
             # '借方科目'列に結果を出力
             df_september['借方科目'] = df_september.apply(get_debit_account, axis=1)
-            output_df['借方科目'] = df_september['借方科目']
+            output_df['借方勘定科目'] = df_september['借方科目']
 
             # 貸方科目にデフォルト値を設定（指定されたdefault_valueを使用）
             df_september['貸方科目'] = df_september.get('貸方科目', pd.Series(default_value, index=df_september.index)).fillna(default_value)
-            output_df['貸方科目'] = df_september['貸方科目']
+            output_df['貸方勘定科目'] = df_september['貸方科目']
 
             # 借方税区分を条件に基づいて設定
             output_df['借方税区分'] = df_september.apply(
